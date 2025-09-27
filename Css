@@ -50,3 +50,51 @@ footer {
   text-align: center;
   padding: 1rem;
 }
+/* Styl pro kontaktní formulář */
+#kontakt {
+  max-width: 500px;
+  margin: 50px auto;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+#kontakt h2 {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+#kontakt form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+#kontakt input,
+#kontakt textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+#kontakt textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+#kontakt button {
+  padding: 12px;
+  background: #222;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#kontakt button:hover {
+  background: #444;
+}
