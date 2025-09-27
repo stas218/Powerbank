@@ -3,175 +3,104 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Powerbank Rental — Pronájem powerbank pro podniky</title>
+  <title>Pronájem powerbank</title>
   <style>
-    :root{
-      --bg:#f6f6f6;
-      --dark:#222;
-      --accent:#d92b2b; /* červené CTA */
-      --muted:#777;
-      --card:#fff;
-      --green:#63c24a;
-      --maxwidth:1100px;
-      font-family: "Helvetica Neue", Arial, sans-serif;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--dark);line-height:1.5}
-    header{background:var(--dark);color:white;padding:28px 16px;text-align:center}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f5f5;color:#222;line-height:1.5}
+    header{background:#111;color:#fff;text-align:center;padding:20px}
     header h1{margin:0;font-size:28px}
-    header p{margin:6px 0 0;color:#ddd}
-    .container{max-width:var(--maxwidth);margin:30px auto;padding:0 16px}
-    /* HERO */
-    .hero{background:var(--card);border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.08);overflow:hidden}
-    .hero-img{width:100%;height:50vh;min-height:320px;object-fit:cover;display:block}
-    .hero-content{padding:24px;text-align:center}
-    .hero-content h2{font-size:28px;margin:6px 0 12px}
-    .price-big{font-size:36px;color:var(--accent);font-weight:700;margin-bottom:12px}
-    .btn{display:inline-block;background:var(--accent);color:white;padding:12px 26px;border-radius:10px;text-decoration:none;font-weight:700}
-    /* Pricing */
-    .pricing{display:flex;gap:16px;margin:28px 0;flex-wrap:wrap;justify-content:center}
-    .price-card{background:var(--card);padding:18px;border-radius:10px;min-width:200px;flex:1 1 200px;box-shadow:0 6px 20px rgba(0,0,0,0.06);text-align:center}
+    .container{max-width:1100px;margin:20px auto;padding:0 16px}
+    img{max-width:100%;border-radius:8px}
+    h2{margin-top:30px;font-size:24px}
+    .pricing{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px}
+    .price-card{background:#fff;flex:1 1 200px;padding:16px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.08);text-align:center}
     .price-card h3{margin:0 0 8px}
-    .price-value{font-size:28px;color:var(--accent);font-weight:700}
-    /* Gallery */
-    .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:24px 0}
-    .gallery img{width:100%;height:220px;object-fit:cover;border-radius:8px;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,0.06)}
-    /* Video */
-    .video-wrap{background:#fff;padding:16px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.06);margin:20px 0;text-align:center}
-    .video-wrap iframe,.video-wrap video{width:100%;height:360px;border-radius:8px}
-    /* Return & Reklamace */
-    .info-box{background:var(--card);padding:18px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.06);margin:14px 0}
-    .info-box h4{margin-top:0}
-    .muted{color:var(--muted)}
-    /* Footer */
-    footer{background:var(--dark);color:white;padding:28px 16px;margin-top:40px;text-align:center}
-    footer a{color:#fff;text-decoration:underline}
-    /* responsive tweaks */
-    @media (max-width:600px){
-      .hero-content h2{font-size:22px}
-      .price-big{font-size:28px}
-      .video-wrap iframe{height:220px}
-    }
+    .price-card .value{font-size:24px;font-weight:bold;color:#d22}
+    .info-box{background:#fff;padding:16px;margin-top:16px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+    .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
+    footer{background:#111;color:#fff;text-align:center;padding:20px;margin-top:30px}
+    a{color:#d22}
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Powerbank Rental</h1>
-    <p>Pronájem powerbank pro restaurace, kavárny a podniky — jednoduché a spolehlivé</p>
-  </header>
+<header>
+  <h1>Pronájem powerbank</h1>
+  <p>Energie vždy po ruce — půjčte si powerbanku snadno a rychle</p>
+</header>
 
-  <main class="container">
+<main class="container">
 
-    <!-- HERO -->
-    <section class="hero" aria-labelledby="hero-title">
-      <!-- ========== ZDE NAHRADIT /images/hero.jpg podle tvých jmen souborů ========== -->
-      <img class="hero-img" src="images/hero.jpg" alt="Powerbank charging station — pronájem" />
-      <div class="hero-content">
-        <h2 id="hero-title">Pronájem powerbank — vždy připravená energie pro vaše zákazníky</h2>
-        <p class="muted">Umístíme nabíjecí stanici do vaší provozovny a nabízíte pronájem powerbank hostům. Zvyšuje to komfort zákazníků a přináší vám nový drobný příjem.</p>
-        <div style="margin-top:14px">
-          <a class="btn" href="#contact">Kontaktovat</a>
-        </div>
+  <!-- Hlavní foto -->
+  <section>
+    <img src="-10884040811836851764.jpg" alt="Pronájem powerbank hlavní foto">
+  </section>
+
+  <!-- Ceník -->
+  <section>
+    <h2>Ceník pronájmu</h2>
+    <img src="-1089696623-690792739.jpg" alt="Informace o ceně powerbank">
+    <div class="pricing">
+      <div class="price-card">
+        <h3>30 minut</h3>
+        <div class="value">30 Kč</div>
       </div>
-    </section>
-
-    <!-- PRICING -->
-    <section aria-labelledby="pricing" style="margin-top:22px">
-      <h2 id="pricing">Ceník pronájmu</h2>
-      <div class="pricing">
-        <div class="price-card">
-          <h3>30 minut</h3>
-          <div class="price-value">30 Kč</div>
-          <p class="muted">Rychlé nabití na cestu</p>
-        </div>
-        <div class="price-card">
-          <h3>60 minut</h3>
-          <div class="price-value">60 Kč</div>
-          <p class="muted">Plné nabití v závislosti na zařízení</p>
-        </div>
-        <div class="price-card">
-          <h3>Denní tarif (24 h)</h3>
-          <div class="price-value">199 Kč</div>
-          <p class="muted">Výhodné pro delší potřebu</p>
-        </div>
+      <div class="price-card">
+        <h3>60 minut</h3>
+        <div class="value">60 Kč</div>
       </div>
-    </section>
-
-    <!-- PHOTO usage -->
-    <section style="margin-top:10px">
-      <div class="info-box">
-        <!-- změň název souboru níže podle svého -->
-        <img src="images/price-usage.jpg" alt="Použití nabíjecí stanice" style="width:100%;height:360px;object-fit:cover;border-radius:8px;margin-bottom:12px"/>
-        <h3>Jak to funguje</h3>
-        <p class="muted">1) Naskenujte QR kód na stanici — 2) zaplaťte pronájem — 3) vezměte powerbank — 4) vraťte do stanice.</p>
+      <div class="price-card">
+        <h3>Celý den</h3>
+        <div class="value">100 Kč</div>
       </div>
-    </section>
-
-    <!-- VIDEO -->
-    <section aria-labelledby="video" style="margin-top:12px">
-      <h2 id="video">Krátké video — jak pronájem funguje</h2>
-      <div class="video-wrap">
-        <!-- pokud máš YouTube vlož sem iframe (vyměň YOUTUBE_ID) -->
-        <!-- <iframe src="https://www.youtube.com/embed/YOUTUBE_ID" frameborder="0" allowfullscreen></iframe> -->
-        <!-- nebo pokud máš vlastní MP4, nahraj ho do /videos/ a použij <video> -->
-        <video controls poster="images/hero.jpg">
-          <source src="videos/demo.mp4" type="video/mp4">
-          Vaše prohlížeč nepodporuje video tag — zobrazí se odkaz.
-        </video>
-      </div>
-    </section>
-
-    <!-- GALLERY -->
-    <section aria-labelledby="gallery" style="margin-top:20px">
-      <h2 id="gallery">Galerie — naše stanice a powerbanky</h2>
-      <div class="gallery">
-        <img src="images/pb1.jpg" alt="Powerbank stanice detail 1">
-        <img src="images/pb2.jpg" alt="Powerbank stanice detail 2">
-        <img src="images/pb3.jpg" alt="Powerbank stanice detail 3">
-        <img src="images/pb4.jpg" alt="Malý nabíjecí automat">
-      </div>
-    </section>
-
-    <!-- RETURN / VRÁCENÍ -->
-    <section style="margin-top:12px">
-      <div class="info-box">
-        <h4>Vrácení powerbank</h4>
-        <p class="muted">Powerbank vraťte do libovolné naší stanice stejného systému. Pokud se vrátí pozdě, může být účtováno příslušné prodloužení dle ceníku (viz sekce Ceník).</p>
-        <p><strong>Urgentní servis/vrácení (24/7):</strong> +420 123 456 789</p>
-      </div>
-    </section>
-
-    <!-- REKLAMACE -->
-    <section style="margin-top:12px">
-      <div class="info-box" id="reklamace">
-        <h4>Reklamace a servis</h4>
-        <p class="muted">V případě reklamace postupujeme podle záručních podmínek. K reklamaci pište na email nebo volejte urgentní servis.</p>
-        <p><strong>Email pro reklamace:</strong> <a href="mailto:gdeto123456@gmail.com">gdeto123456@gmail.com</a></p>
-        <p><strong>Telefon pro urgentní servis:</strong> +420 123 456 789</p>
-      </div>
-    </section>
-
-    <!-- CONTACT -->
-    <section style="margin-top:18px" id="contact">
-      <div class="info-box">
-        <h3>Kontakt</h3>
-        <p><strong>Majitel / provozovatel:</strong> Powerbank Rental</p>
-        <p><strong>Email:</strong> <a href="mailto:gdeto123456@gmail.com">gdeto123456@gmail.com</a></p>
-        <p><strong>Telefon:</strong> +420 123 456 789</p>
-        <p><strong>IČO:</strong> 12345678 (doplňte své IČO)</p>
-        <p><strong>Adresa:</strong> Ulice 123, Město, PSČ (doplňte adresu)</p>
-      </div>
-    </section>
-
-  </main>
-
-  <footer>
-    <div style="max-width:var(--maxwidth);margin:0 auto;padding:0 16px">
-      <p style="margin:0">© 2025 Powerbank Rental — Pronájem powerbank pro podniky</p>
-      <p style="margin:6px 0 0">Kontakt: <a href="mailto:gdeto123456@gmail.com">gdeto123456@gmail.com</a> | Tel: +420 123 456 789</p>
     </div>
-  </footer>
+  </section>
+
+  <!-- Vrácení -->
+  <section class="info-box">
+    <h2>Vrácení powerbank</h2>
+    <p>Powerbank můžete vrátit v jakémkoliv místě nebo městě, kde je naše stanice se stejným názvem firmy.</p>
+  </section>
+
+  <!-- Poničení / Reklamace -->
+  <section class="info-box">
+    <h2>Poškozené powerbanky</h2>
+    <p>Pokud je powerbank poškozená, nahlaste to obsluze nebo přes kontaktní email/telefon. Při nesprávném vrácení může být účtován poplatek.</p>
+  </section>
+
+  <section class="info-box">
+    <h2>Reklamace</h2>
+    <p>Pokud baterie nefunguje, můžete ji reklamovat u obsluhy nebo přímo přes náš kontaktní email. Reklamace jsou vyřizovány bez zbytečného odkladu.</p>
+  </section>
+
+  <!-- Galerie -->
+  <section>
+    <h2>Galerie — použití powerbank</h2>
+    <div class="gallery">
+      <img src="-10882534351145383548.jpg" alt="Ukázka použití powerbank 1">
+      <img src="-1089627652-509879951.jpg" alt="Ukázka použití powerbank 2">
+    </div>
+    <video controls style="margin-top:12px;width:100%;border-radius:8px">
+      <source src="demo.mp4" type="video/mp4">
+      Video nelze přehrát ve vašem prohlížeči.
+    </video>
+  </section>
+
+  <!-- Informace o firmě -->
+  <section class="info-box">
+    <h2>Informace o firmě</h2>
+    <p><strong>Název firmy:</strong> Powerbank s.r.o.</p>
+    <p><strong>IČO:</strong> 12345678</p>
+    <p><strong>Email:</strong> <a href="mailto:gdeto123456@gmail.com">gdeto123456@gmail.com</a></p>
+    <p><strong>Telefon:</strong> +420 123 456 789</p>
+    <p><strong>Adresa:</strong> Ulice 123, Město, PSČ</p>
+    <p><strong>Poštovné:</strong> dle tarifu dopravce</p>
+  </section>
+
+</main>
+
+<footer>
+  <p>© 2025 Powerbank s.r.o. — Pronájem powerbank</p>
+</footer>
 
 </body>
 </html>
