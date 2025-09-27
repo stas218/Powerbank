@@ -3,136 +3,231 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Pronájem powerbank</title>
+  <title>Pronájem powerbank — Powerbank Rental</title>
+
+  <!-- ===== Facebook Pixel: vlož sem své Pixel ID ===== -->
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', 'YOUR_PIXEL_ID'); // <- sem vložíte YOUR_PIXEL_ID
+    fbq('track', 'PageView');
+  </script>
+  <noscript>
+    <img height="1" width="1" style="display:none"
+         src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"/>
+  </noscript>
+  <!-- ================================================= -->
+
+  <!-- Open Graph (pro správný náhled při sdílení) -->
+  <!-- Replace URL_WITH_YOUR_SITE below with your site URL e.g. https://stas218.github.io/Powerbank/ -->
+  <meta property="og:title" content="Pronájem powerbank — Powerbank Rental">
+  <meta property="og:description" content="Půjčovna powerbank pro restaurace a podniky. 30 min = 30 Kč, 60 min = 60 Kč, celý den = 100 Kč.">
+  <meta property="og:image" content="https://URL_WITH_YOUR_SITE/-10884040811836851764.jpg">
+  <meta property="og:url" content="https://URL_WITH_YOUR_SITE/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+
   <style>
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f5f5;color:#222;line-height:1.5}
-    header{background:#111;color:#fff;text-align:center;padding:20px}
+    :root{
+      --accent:#d22;
+      --bg:#f6f6f6;
+      --card:#fff;
+      --dark:#111;
+      --muted:#666;
+      --maxw:1100px;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:#222}
+    header{background:var(--dark);color:#fff;padding:28px 16px;text-align:center}
     header h1{margin:0;font-size:28px}
-    .container{max-width:1100px;margin:20px auto;padding:0 16px}
-    img{max-width:100%;border-radius:8px}
-    h2{margin-top:30px;font-size:24px}
-    .pricing{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px}
-    .price-card{background:#fff;flex:1 1 200px;padding:16px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.08);text-align:center}
-    .price-card h3{margin:0 0 8px}
-    .price-card .value{font-size:24px;font-weight:bold;color:#d22}
-    .info-box{background:#fff;padding:16px;margin-top:16px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+    header p{margin:8px 0 0;color:#ddd}
+    .container{max-width:var(--maxw);margin:26px auto;padding:0 16px}
+
+    /* Hero */
+    .hero{background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.06)}
+    .hero img{width:100%;height:420px;object-fit:cover;display:block}
+    .hero .inner{padding:20px;text-align:center}
+    .hero h2{margin:6px 0 8px;font-size:26px}
+    .price{font-size:28px;color:var(--accent);font-weight:700;margin:8px 0}
+
+    /* Pricing */
+    .pricing{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+    .card-price{background:var(--card);padding:16px;border-radius:10px;min-width:160px;box-shadow:0 8px 20px rgba(0,0,0,0.05);text-align:center}
+    .card-price h3{margin:6px 0}
+    .card-price .val{font-size:22px;color:var(--accent);font-weight:700}
+
+    /* info */
+    .info{margin-top:20px;display:grid;gap:12px}
+    .info .box{background:var(--card);padding:16px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,0.05)}
+    .muted{color:var(--muted)}
+
+    /* gallery */
     .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
-    footer{background:#111;color:#fff;text-align:center;padding:20px;margin-top:30px}
-    a{color:#d22}
+    .gallery img{width:100%;height:220px;object-fit:cover;border-radius:8px}
+
+    /* video */
+    .video-wrap{margin-top:12px;background:var(--card);padding:12px;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,0.05)}
+    .video-wrap video{width:100%;height:auto;border-radius:6px}
+
+    /* contact */
+    .contact{display:grid;grid-template-columns:1fr;gap:12px;margin-top:18px}
+    .contact .box{background:var(--card);padding:16px;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,0.05)}
+    .contact a{color:var(--accent);text-decoration:none}
+
+    footer{background:var(--dark);color:#fff;text-align:center;padding:20px;margin-top:26px}
+
+    @media(min-width:800px){
+      .contact{grid-template-columns:1fr 360px}
+    }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>Pronájem powerbank</h1>
-  <p>Energie vždy po ruce — půjčte si powerbanku snadno a rychle</p>
-</header>
+  <!-- Facebook root for SDK (needed for Like/Share button) -->
+  <div id="fb-root"></div>
+  <script async defer crossorigin="anonymous"
+    src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v19.0" nonce="fbshare"></script>
 
-<main class="container">
+  <header>
+    <h1>Pronájem powerbank</h1>
+    <p>Snadný pronájem powerbank pro restaurace, kavárny a eventy — zvýšíte komfort zákazníků</p>
+  </header>
 
-  <!-- Hlavní foto -->
-  <section>
-    <img src="-10884040811836851764.jpg" alt="Pronájem powerbank hlavní foto">
-  </section>
+  <main class="container">
+    <!-- HERO -->
+    <section class="hero" aria-label="Hlavní nabídka">
+      <img src="-10884040811836851764.jpg" alt="Hlavní foto powerbank" />
+      <div class="inner">
+        <h2>Pronajměte si powerbanku hned teď</h2>
+        <p class="muted">30 minut – 30 Kč • 60 minut – 60 Kč • Celý den – 100 Kč</p>
+        <div class="price">Rychlé půjčení a snadné vrácení</div>
 
-  <!-- Ceník -->
-  <section>
-    <h2>Ceník pronájmu</h2>
-    <img src="-1089696623-690792739.jpg" alt="Informace o ceně powerbank">
-    <div class="pricing">
-      <div class="price-card">
-        <h3>30 minut</h3>
-        <div class="value">30 Kč</div>
+        <!-- Facebook share button (otevře dialog sdílení) -->
+        <div style="margin-top:10px;">
+          <div class="fb-share-button"
+               data-href="https://URL_WITH_YOUR_SITE/" 
+               data-layout="button" data-size="large">
+          </div>
+        </div>
       </div>
-      <div class="price-card">
-        <h3>60 minut</h3>
-        <div class="value">60 Kč</div>
+    </section>
+
+    <!-- CENÍK -->
+    <section>
+      <h2>Ceník pronájmu</h2>
+      <img src="-1089696623-690792739.jpg" alt="Informace o ceně" style="max-width:680px;border-radius:8px;margin-top:8px" />
+      <div class="pricing" aria-hidden="false">
+        <div class="card-price">
+          <h3>30 minut</h3>
+          <div class="val">30 Kč</div>
+        </div>
+        <div class="card-price">
+          <h3>60 minut</h3>
+          <div class="val">60 Kč</div>
+        </div>
+        <div class="card-price">
+          <h3>Celý den</h3>
+          <div class="val">100 Kč</div>
+        </div>
       </div>
-      <div class="price-card">
-        <h3>Celý den</h3>
-        <div class="value">100 Kč</div>
+    </section>
+
+    <!-- VRÁCENÍ -->
+    <section class="info">
+      <div class="box">
+        <h3>Vrácení powerbank</h3>
+        <p class="muted">Powerbanku vraťte v kterékoliv naší stanici se stejným názvem firmy (tj. naše partnerská místa ve městech). Systém automaticky ukončí pronájem při vložení powerbanky do slotu.</p>
       </div>
+
+      <div class="box">
+        <h3>Poškození a krádež</h3>
+        <p class="muted">V případě poškození nebo ztráty kontaktujte servis. Pokud bude prokázána úmyslná škoda, může být účtován poplatek dle našich obchodních podmínek.</p>
+      </div>
+
+      <div class="box">
+        <h3>Reklamace</h3>
+        <p class="muted">Pokud baterie nefunguje, nahlaste reklamaci e-mailem na <a href="mailto:gdeto123456@gmail.com">gdeto123456@gmail.com</a>. Odezva obvykle do 48 hodin. Při urgentním servisu volejte +420 123 456 789.</p>
+      </div>
+    </section>
+
+    <!-- GALERIE -->
+    <section>
+      <h2>Galerie – použití</h2>
+      <div class="gallery">
+        <img src="-10882534351145383548.jpg" alt="Použití powerbank 1">
+        <img src="-1089627652-509879951.jpg" alt="Použití powerbank 2">
+      </div>
+
+      <div class="video-wrap">
+        <h3 style="margin-top:0">Video – jak to funguje</h3>
+        <!-- pokud máš demo.mp4 v repozitáři, bude fungovat -->
+        <video controls poster="-10884040811836851764.jpg">
+          <source src="demo.mp4" type="video/mp4">
+          Vaše zařízení nepodporuje přehrávání videa.
+        </video>
+      </div>
+    </section>
+
+    <!-- KONTAKT & FIREMNÍ INFORMACE -->
+    <section class="contact" id="contact">
+      <div class="box">
+        <h3>Kontaktujte nás / Rezervace</h3>
+        <p class="muted">Pošlete poptávku, my se ozveme s nabídkou a termínem instalace.</p>
+
+        <!-- jednoduchý formulář: používá mailto fallback -->
+        <form onsubmit="return sendMail(event)">
+          <input type="text" id="fname" name="fname" placeholder="Jméno a příjmení" required style="width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ddd">
+          <input type="email" id="femail" name="femail" placeholder="E-mail" required style="width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ddd">
+          <textarea id="fmsg" name="fmsg" placeholder="Zpráva (počet kusů, město, období)" style="width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ddd" rows="4"></textarea>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button type="submit" style="background:var(--accent);color:#fff;padding:10px 16px;border-radius:8px;border:none;font-weight:700;cursor:pointer">Odeslat poptávku</button>
+            <div class="muted" style="font-size:14px">nebo napište na <a href="mailto:gdeto123456@gmail.com">gdeto123456@gmail.com</a></div>
+          </div>
+        </form>
+      </div>
+
+      <div class="box">
+        <h3>Firma & kontakt</h3>
+        <p><strong>Název firmy:</strong> Powerbank s.r.o.</p>
+        <p><strong>IČO:</strong> 12345678</p>
+        <p><strong>E-mail:</strong> <a href="mailto:gdeto123456@gmail.com">gdeto123456@gmail.com</a></p>
+        <p><strong>Telefon:</strong> +420 123 456 789</p>
+        <p><strong>Adresa:</strong> Ulice 123, Město, PSČ</p>
+        <p><strong>Poštovné:</strong> Dle tarifu dopravce</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div style="max-width:var(--maxw);margin:0 auto;padding:0 16px">
+      <p style="margin:0">© <span id="year"></span> Powerbank s.r.o. — Pronájem powerbank</p>
     </div>
-  </section>
+  </footer>
 
-  <!-- Vrácení -->
-  <section class="info-box">
-    <h2>Vrácení powerbank</h2>
-    <p>Powerbank můžete vrátit v jakémkoliv místě nebo městě, kde je naše stanice se stejným názvem firmy.</p>
-  </section>
+<script>
+  // nastavení roku
+  document.getElementById('year').textContent = new Date().getFullYear();
 
-  <!-- Poničení / Reklamace -->
-  <section class="info-box">
-    <h2>Poškozené powerbanky</h2>
-    <p>Pokud je powerbank poškozená, nahlaste to obsluze nebo přes kontaktní email/telefon. Při nesprávném vrácení může být účtován poplatek.</p>
-  </section>
-
-  <section class="info-box">
-    <h2>Reklamace</h2>
-    <p>Pokud baterie nefunguje, můžete ji reklamovat u obsluhy nebo přímo přes náš kontaktní email. Reklamace jsou vyřizovány bez zbytečného odkladu.</p>
-  </section>
-
-  <!-- Galerie -->
-  <section>
-    <h2>Galerie — použití powerbank</h2>
-    <div class="gallery">
-      <img src="-10882534351145383548.jpg" alt="Ukázka použití powerbank 1">
-      <img src="-1089627652-509879951.jpg" alt="Ukázka použití powerbank 2">
-    </div>
-    <video controls style="margin-top:12px;width:100%;border-radius:8px">
-      <source src="demo.mp4" type="video/mp4">
-      Video nelze přehrát ve vašem prohlížeči.
-    </video>
-  </section>
-
-  <!-- Informace o firmě -->
-  <section class="info-box">
-    <h2>Informace o firmě</h2>
-    <p><strong>Název firmy:</strong> Powerbank s.r.o.</p>
-    <p><strong>IČO:</strong> 12345678</p>
-    <p><strong>Email:</strong> <a href="mailto:gdeto123456@gmail.com">gdeto123456@gmail.com</a></p>
-    <p><strong>Telefon:</strong> +420 123 456 789</p>
-    <p><strong>Adresa:</strong> Ulice 123, Město, PSČ</p>
-    <p><strong>Poštovné:</strong> dle tarifu dopravce</p>
-  </section>
-
-</main>
-
-<footer>
-  <p>© 2025 Powerbank s.r.o. — Pronájem powerbank</p>
-</footer>
+  // formulář: otevře mailto odkaz (fallback)
+  function sendMail(e){
+    e.preventDefault();
+    const name = encodeURIComponent(document.getElementById('fname').value.trim());
+    const email = encodeURIComponent(document.getElementById('femail').value.trim());
+    const msg = encodeURIComponent(document.getElementById('fmsg').value.trim());
+    const subject = encodeURIComponent('Poptávka pronájem powerbank - ' + name);
+    const body = `Jméno: ${name}%0D%0AEmail: ${email}%0D%0AZpráva:%0D%0A${msg}`;
+    window.location.href = `mailto:gdeto123456@gmail.com?subject=${subject}&body=${body}`;
+    return false;
+  }
+</script>
 
 </body>
 </html>
-<!-- Facebook Pixel Code -->
-<script>
-  !function(f,b,e,v,n,t,s)
-  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-  n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];
-  s.parentNode.insertBefore(t,s)}(window, document,'script',
-  'https://connect.facebook.net/en_US/fbevents.js');
-  fbq('init', 'VAŠE_PIXEL_ID'); 
-  fbq('track', 'PageView');
-</script>
-<noscript>
-  <img height="1" width="1" style="display:none"
-  src="https://www.facebook.com/tr?id=VAŠE_PIXEL_ID&ev=PageView&noscript=1"/>
-</noscript>
-<!-- End Facebook Pixel Code -->
-<!-- Facebook Like Button -->
-<div class="fb-like" 
-     data-href="https://váš-web.cz" 
-     data-width="" 
-     data-layout="standard" 
-     data-action="like" 
-     data-size="large" 
-     data-share="true"></div>
-
-<!-- Facebook SDK -->
-<div id="fb-root"></div>
-<script async defer crossorigin="anonymous" 
-  src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v19.0">
-</script>
