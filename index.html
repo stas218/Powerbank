@@ -1,233 +1,336 @@
-<!doctype html>
-<html lang="cs">
+<?php
+// Plně vylepšený mini e-shop pro prodej her (single-file demo)
+// Soubor: index.php
+// Požadavky: PHP 7.4+, PDO_SQLITE povolen, práva pro upload souborů
+// Poznámka: jedná se o demonstrační řešení — před nasazením zabezpečte HTTPS, nastavte silné heslo a použijte profesionální platební bránu.
+
+session_start();
+
+// ---------- KONFIGURACE ----------
+define('DB_FILE', __DIR__ . '/data/shop.db');
+// Defaultní admin uživatel (změňte nebo vytvořte nový v adminu). Heslo: admin123 (hashováno)
+define('DEFAULT_ADMIN_HASH', '" . password_hash('admin123', PASSWORD_DEFAULT) . "');
+// E-mail pro odesílání potvrzení (nefunguje v lokálním PHP bez mailserveru)
+define('FROM_EMAIL', 'no-reply@example.com');
+// složky
+if(!file_exists(__DIR__.'/data')) mkdir(__DIR__.'/data', 0755, true);
+if(!file_exists(__DIR__.'/uploads')) mkdir(__DIR__.'/uploads', 0755, true);
+
+// ---------- DB ----------
+function db(){
+    static $db = null;
+    if($db) return $db;
+    $db = new PDO('sqlite:'.DB_FILE);
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // tables
+    $db->exec("CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE,
+        password TEXT,
+        is_admin INTEGER DEFAULT 0,
+        created_at TEXT
+    )");
+    $db->exec("CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
+        slug TEXT UNIQUE,
+        price REAL,
+        description TEXT,
+        stock INTEGER DEFAULT 0,
+        digital_keys TEXT DEFAULT '',
+        image TEXT DEFAULT ''
+    )");
+    $db->exec("CREATE TABLE IF NOT EXISTS orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        email TEXT,
+        items TEXT,
+        total REAL,
+        status TEXT DEFAULT 'new',
+        created_at TEXT
+    )");
+    // ensure default admin exists
+    $stmt = $db->prepare('SELECT COUNT(*) FROM users WHERE is_admin=1');
+    $stmt->execute();
+    if($stmt->fetchColumn()==0){
+        $pw = DEFAULT_ADMIN_HASH;
+        $i = $db->prepare('INSERT INTO users (email,password,is_admin,created_at) VALUES (?,?,1,?)');
+        $i->execute(['admin@local', $pw, date('c')]);
+    }
+    return $db;
+}
+
+// ---------- HELPERS ----------
+function h($s){ return htmlspecialchars($s, ENT_QUOTES); }
+function slugify($s){ return preg_replace('/[^a-z0-9\-]/','',strtolower(str_replace(' ','-',$s))); }
+function rand_token($len=32){ return bin2hex(random_bytes($len/2)); }
+
+// CSRF
+if(!isset($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
+function csrf_field(){ return '<input type="hidden" name="csrf" value="'.h($_SESSION['csrf']).'">'; }
+function check_csrf(){ if(($_POST['csrf'] ?? '') !== $_SESSION['csrf']) die('CSRF token chybí nebo nesouhlasí'); }
+
+// Auth
+function current_user(){ if(isset($_SESSION['user_id'])){
+    $db = db(); $s=$db->prepare('SELECT id,email,is_admin FROM users WHERE id=?'); $s->execute([$_SESSION['user_id']]); return $s->fetch(PDO::FETCH_ASSOC);
+} return null; }
+
+// Routing
+$action = $_GET['action'] ?? 'home';
+$db = db();
+
+// ---------- AUTH ROUTES ----------
+if($action==='register' && $_SERVER['REQUEST_METHOD']==='POST'){
+    check_csrf();
+    $email = trim($_POST['email']); $pw = $_POST['password'];
+    if(!filter_var($email, FILTER_VALIDATE_EMAIL)) $error='Neplatný email.';
+    else if(strlen($pw) < 6) $error='Heslo musí mít alespoň 6 znaků.';
+    else{
+        $h = password_hash($pw, PASSWORD_DEFAULT);
+        $i = $db->prepare('INSERT INTO users (email,password,created_at) VALUES (?,?,?)');
+        try{
+            $i->execute([$email,$h,date('c')]);
+            $uid = $db->lastInsertId(); $_SESSION['user_id']=$uid; header('Location: index.php'); exit;
+        }catch(Exception $e){ $error='Email je již použit.'; }
+    }
+}
+if($action==='login' && $_SERVER['REQUEST_METHOD']==='POST'){
+    check_csrf();
+    $email = trim($_POST['email']); $pw = $_POST['password'];
+    $s = $db->prepare('SELECT * FROM users WHERE email=? LIMIT 1'); $s->execute([$email]); $u = $s->fetch(PDO::FETCH_ASSOC);
+    if($u && password_verify($pw, $u['password'])){ $_SESSION['user_id'] = $u['id']; header('Location: index.php'); exit; }
+    else $error='Špatné přihlašovací údaje.';
+}
+if($action==='logout'){ unset($_SESSION['user_id']); header('Location: index.php'); exit; }
+
+// ---------- ADMIN ROUTES ----------
+function require_admin(){ $u = current_user(); if(!$u || !$u['is_admin']) die('Přístup odepřen.'); }
+if($action==='admin_add' && $_SERVER['REQUEST_METHOD']==='POST'){ require_admin(); check_csrf();
+    $title = trim($_POST['title']); $price = floatval($_POST['price']); $stock = intval($_POST['stock']); $desc = $_POST['description'];
+    $slug = slugify($title);
+    // image upload
+    $imageName = '';
+    if(!empty($_FILES['image']['name'])){
+        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $allowed = ['jpg','jpeg','png','gif'];
+        if(!in_array(strtolower($ext), $allowed)) $error = 'Neplatný formát obrázku.';
+        else{
+            $imageName = uniqid('img_').'.'.$ext;
+            move_uploaded_file($_FILES['image']['tmp_name'], __DIR__.'/uploads/'.$imageName);
+        }
+    }
+    if(empty($error)){
+        $i = $db->prepare('INSERT INTO products (title,slug,price,description,stock,digital_keys,image) VALUES (?,?,?,?,?,?,?)');
+        $i->execute([$title,$slug,$price,$desc,$stock,trim($_POST['digital_keys']),$imageName]);
+        header('Location: index.php?action=admin'); exit;
+    }
+}
+if($action==='admin_delete' && isset($_GET['id'])){ require_admin(); $id=intval($_GET['id']); $db->prepare('DELETE FROM products WHERE id=?')->execute([$id]); header('Location: index.php?action=admin'); exit; }
+if($action==='admin_orders'){ require_admin(); /* list orders below */ }
+
+// ---------- CART & ORDER ----------
+if($action==='add_to_cart' && $_SERVER['REQUEST_METHOD']==='POST'){
+    check_csrf(); $id = intval($_POST['product_id']); $qty = max(1,intval($_POST['qty']??1)); if(!isset($_SESSION['cart'])) $_SESSION['cart']=[]; $_SESSION['cart'][$id] = ($_SESSION['cart'][$id] ?? 0) + $qty; header('Location: index.php?action=cart'); exit;
+}
+if($action==='remove_cart'){ $id = intval($_GET['id'] ?? 0); if(isset($_SESSION['cart'][$id])) unset($_SESSION['cart'][$id]); header('Location: index.php?action=cart'); exit; }
+if($action==='checkout' && $_SERVER['REQUEST_METHOD']==='POST'){
+    check_csrf(); $email = trim($_POST['email']); $cart = $_SESSION['cart'] ?? []; if(empty($cart)) $error='Košík je prázdný.';
+    else{
+        // load products
+        $ids = array_keys($cart); $placeholders = rtrim(str_repeat('?,', count($ids)), ',');
+        $stmt = $db->prepare('SELECT * FROM products WHERE id IN ('.$placeholders.')'); $stmt->execute($ids); $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $items = []; $total = 0;
+        foreach($rows as $r){ $qty = $cart[$r['id']]; $items[]=['id'=>$r['id'],'title'=>$r['title'],'qty'=>$qty,'price'=>$r['price']]; $total += $r['price']*$qty;
+            if(intval($r['stock'])>0){ $new = max(0,intval($r['stock'])-$qty); $db->prepare('UPDATE products SET stock=? WHERE id=?')->execute([$new,$r['id']]); }
+        }
+        // store order
+        $user_id = $_SESSION['user_id'] ?? null;
+        $ost = $db->prepare('INSERT INTO orders (user_id,email,items,total,created_at) VALUES (?,?,?,?,?)');
+        $ost->execute([$user_id,$email,json_encode($items, JSON_UNESCAPED_UNICODE),$total,date('c')]);
+        $orderId = $db->lastInsertId();
+        // assign digital keys
+        $keysGiven = [];
+        foreach($rows as $r){ if(trim($r['digital_keys'])!==''){
+            $allkeys = preg_split('/[
+]+/', trim($r['digital_keys']));
+            for($i=0;$i<$cart[$r['id']];$i++){ $k = array_shift($allkeys); if($k) $keysGiven[]=['title'=>$r['title'],'key'=>$k]; }
+            $db->prepare('UPDATE products SET digital_keys=? WHERE id=?')->execute([implode("
+", $allkeys), $r['id']]);
+        }}
+        // clear cart
+        $_SESSION['cart'] = [];
+        // save order info to session for display
+        $_SESSION['last_order'] = ['id'=>$orderId,'total'=>$total,'keys'=>$keysGiven,'email'=>$email];
+        // send confirmation email (simple)
+        $msg = "Dekuji za objednavku #{$orderId}
+Celkem: {$total} CZK
+";
+        foreach($keysGiven as $k) $msg .= "{$k['title']}: {$k['key']}
+";
+        // @mail(FROM_EMAIL, "Objednávka #{$orderId}", $msg); // odkomentujte pokud máte mail server
+        header('Location: index.php?action=order_success'); exit;
+    }
+}
+
+// Admin: change order status
+if($action==='admin_update_order' && $_SERVER['REQUEST_METHOD']==='POST'){ require_admin(); check_csrf(); $id=intval($_POST['order_id']); $status = $_POST['status']; $db->prepare('UPDATE orders SET status=? WHERE id=?')->execute([$status,$id]); header('Location: index.php?action=admin_orders'); exit; }
+
+// ---------- VÝPISY ----------
+?><!doctype html><html lang="cs">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Pronájem powerbank — Powerbank Rental</title>
-
-  <!-- ===== Facebook Pixel: vlož sem své Pixel ID ===== -->
-  <script>
-    !function(f,b,e,v,n,t,s)
-    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-    n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];
-    s.parentNode.insertBefore(t,s)}(window, document,'script',
-    'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', 'YOUR_PIXEL_ID'); // <- sem vložíte YOUR_PIXEL_ID
-    fbq('track', 'PageView');
-  </script>
-  <noscript>
-    <img height="1" width="1" style="display:none"
-         src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"/>
-  </noscript>
-  <!-- ================================================= -->
-
-  <!-- Open Graph (pro správný náhled při sdílení) -->
-  <!-- Replace URL_WITH_YOUR_SITE below with your site URL e.g. https://stas218.github.io/Powerbank/ -->
-  <meta property="og:title" content="Pronájem powerbank — Powerbank Rental">
-  <meta property="og:description" content="Půjčovna powerbank pro restaurace a podniky. 30 min = 30 Kč, 60 min = 60 Kč, celý den = 100 Kč.">
-  <meta property="og:image" content="https://URL_WITH_YOUR_SITE/-10884040811836851764.jpg">
-  <meta property="og:url" content="https://URL_WITH_YOUR_SITE/">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
-
-  <style>
-    :root{
-      --accent:#d22;
-      --bg:#f6f6f6;
-      --card:#fff;
-      --dark:#111;
-      --muted:#666;
-      --maxw:1100px;
-      font-family: Arial, Helvetica, sans-serif;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:#222}
-    header{background:var(--dark);color:#fff;padding:28px 16px;text-align:center}
-    header h1{margin:0;font-size:28px}
-    header p{margin:8px 0 0;color:#ddd}
-    .container{max-width:var(--maxw);margin:26px auto;padding:0 16px}
-
-    /* Hero */
-    .hero{background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.06)}
-    .hero img{width:100%;height:420px;object-fit:cover;display:block}
-    .hero .inner{padding:20px;text-align:center}
-    .hero h2{margin:6px 0 8px;font-size:26px}
-    .price{font-size:28px;color:var(--accent);font-weight:700;margin:8px 0}
-
-    /* Pricing */
-    .pricing{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:18px}
-    .card-price{background:var(--card);padding:16px;border-radius:10px;min-width:160px;box-shadow:0 8px 20px rgba(0,0,0,0.05);text-align:center}
-    .card-price h3{margin:6px 0}
-    .card-price .val{font-size:22px;color:var(--accent);font-weight:700}
-
-    /* info */
-    .info{margin-top:20px;display:grid;gap:12px}
-    .info .box{background:var(--card);padding:16px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,0.05)}
-    .muted{color:var(--muted)}
-
-    /* gallery */
-    .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
-    .gallery img{width:100%;height:220px;object-fit:cover;border-radius:8px}
-
-    /* video */
-    .video-wrap{margin-top:12px;background:var(--card);padding:12px;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,0.05)}
-    .video-wrap video{width:100%;height:auto;border-radius:6px}
-
-    /* contact */
-    .contact{display:grid;grid-template-columns:1fr;gap:12px;margin-top:18px}
-    .contact .box{background:var(--card);padding:16px;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,0.05)}
-    .contact a{color:var(--accent);text-decoration:none}
-
-    footer{background:var(--dark);color:#fff;text-align:center;padding:20px;margin-top:26px}
-
-    @media(min-width:800px){
-      .contact{grid-template-columns:1fr 360px}
-    }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mini E-shop — Prodej her</title>
+<style>
+:root{font-family:Inter,Arial,Helvetica,sans-serif}
+body{max-width:1100px;margin:20px auto;padding:12px;color:#222}
+header{display:flex;justify-content:space-between;align-items:center}
+.card{border:1px solid #eee;padding:14px;border-radius:10px;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.product img{max-width:100%;height:160px;object-fit:cover;border-radius:8px}
+.button{display:inline-block;padding:8px 12px;border-radius:6px;text-decoration:none;background:#0a74da;color:#fff}
+form.inline{display:inline}
+.small{font-size:0.9rem;color:#666}
+</style>
 </head>
 <body>
-
-  <!-- Facebook root for SDK (needed for Like/Share button) -->
-  <div id="fb-root"></div>
-  <script async defer crossorigin="anonymous"
-    src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v19.0" nonce="fbshare"></script>
-
-  <header>
-    <h1>Pronájem powerbank</h1>
-    <p>Snadný pronájem powerbank pro restaurace, kavárny a eventy — zvýšíte komfort zákazníků</p>
-  </header>
-
-  <main class="container">
-    <!-- HERO -->
-    <section class="hero" aria-label="Hlavní nabídka">
-      <img src="-10884040811836851764.jpg" alt="Hlavní foto powerbank" />
-      <div class="inner">
-        <h2>Pronajměte si powerbanku hned teď</h2>
-        <p class="muted">30 minut – 30 Kč • 60 minut – 60 Kč • Celý den – 100 Kč</p>
-        <div class="price">Rychlé půjčení a snadné vrácení</div>
-
-        <!-- Facebook share button (otevře dialog sdílení) -->
-        <div style="margin-top:10px;">
-          <div class="fb-share-button"
-               data-href="https://URL_WITH_YOUR_SITE/" 
-               data-layout="button" data-size="large">
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CENÍK -->
-    <section>
-      <h2>Ceník pronájmu</h2>
-      <img src="-1089696623-690792739.jpg" alt="Informace o ceně" style="max-width:680px;border-radius:8px;margin-top:8px" />
-      <div class="pricing" aria-hidden="false">
-        <div class="card-price">
-          <h3>30 minut</h3>
-          <div class="val">30 Kč</div>
-        </div>
-        <div class="card-price">
-          <h3>60 minut</h3>
-          <div class="val">60 Kč</div>
-        </div>
-        <div class="card-price">
-          <h3>Celý den</h3>
-          <div class="val">100 Kč</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- VRÁCENÍ -->
-    <section class="info">
-      <div class="box">
-        <h3>Vrácení powerbank</h3>
-        <p class="muted">Powerbanku vraťte v kterékoliv naší stanici se stejným názvem firmy (tj. naše partnerská místa ve městech). Systém automaticky ukončí pronájem při vložení powerbanky do slotu.</p>
-      </div>
-
-      <div class="box">
-        <h3>Poškození a krádež</h3>
-        <p class="muted">V případě poškození nebo ztráty kontaktujte servis. Pokud bude prokázána úmyslná škoda, může být účtován poplatek dle našich obchodních podmínek.</p>
-      </div>
-
-      <div class="box">
-        <h3>Reklamace</h3>
-        <p class="muted">Pokud baterie nefunguje, nahlaste reklamaci e-mailem na <a href="mailto:gdeto123456@gmail.com">gdeto123456@gmail.com</a>. Odezva obvykle do 48 hodin. Při urgentním servisu volejte +420 123 456 789.</p>
-      </div>
-    </section>
-
-    <!-- GALERIE -->
-    <section>
-      <h2>Galerie – použití</h2>
-      <div class="gallery">
-        <img src="-10882534351145383548.jpg" alt="Použití powerbank 1">
-        <img src="-1089627652-509879951.jpg" alt="Použití powerbank 2">
-      </div>
-
-      <div class="video-wrap">
-        <h3 style="margin-top:0">Video – jak to funguje</h3>
-        <!-- pokud máš demo.mp4 v repozitáři, bude fungovat -->
-        <video controls poster="-10884040811836851764.jpg">
-          <source src="demo.mp4" type="video/mp4">
-          Vaše zařízení nepodporuje přehrávání videa.
-        </video>
-      </div>
-    </section>
-
-    <!-- KONTAKT & FIREMNÍ INFORMACE -->
-    <section class="contact" id="contact">
-      <div class="box">
-        <h3>Kontaktujte nás / Rezervace</h3>
-        <p class="muted">Pošlete poptávku, my se ozveme s nabídkou a termínem instalace.</p>
-
-        <!-- jednoduchý formulář: používá mailto fallback -->
-        <form onsubmit="return sendMail(event)">
-          <input type="text" id="fname" name="fname" placeholder="Jméno a příjmení" required style="width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ddd">
-          <input type="email" id="femail" name="femail" placeholder="E-mail" required style="width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ddd">
-          <textarea id="fmsg" name="fmsg" placeholder="Zpráva (počet kusů, město, období)" style="width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ddd" rows="4"></textarea>
-          <div style="display:flex;gap:8px;align-items:center">
-            <button type="submit" style="background:var(--accent);color:#fff;padding:10px 16px;border-radius:8px;border:none;font-weight:700;cursor:pointer">Odeslat poptávku</button>
-            <div class="muted" style="font-size:14px">nebo napište na <a href="mailto:gdeto123456@gmail.com">gdeto123456@gmail.com</a></div>
-          </div>
+<header>
+    <h1>Prodej her — e-shop</h1>
+    <nav>
+        <a href="index.php">Obchod</a> | <a href="index.php?action=cart">Košík</a> | <a href="index.php?action=admin">Admin</a>
+    </nav>
+</header>
+<hr>
+<?php if(!empty($error)): ?><div style="color:#a00"><?=h($error)?></div><?php endif; ?><?php if($action==='home' || $action==='index'): ?><h2>Katalog her</h2>
+<div class="grid">
+<?php $prods = $db->query('SELECT * FROM products ORDER BY id DESC')->fetchAll(PDO::FETCH_ASSOC);
+if(!$prods) echo '<p>Žádné produkty. Přihlaste se do adminu a přidejte první hru.</p>';
+foreach($prods as $p): ?>
+    <div class="card product">
+        <?php if($p['image']): ?><img src="uploads/<?=h($p['image'])?>" alt="<?=h($p['title'])?>"><?php endif; ?>
+        <h3><?=h($p['title'])?> <small class="small"><?= $p['stock']>0? 'skladem: '.intval($p['stock']): 'digitální / bez limitu' ?></small></h3>
+        <p class="small"><?=h(mb_strimwidth($p['description'],0,180,'...'))?></p>
+        <p><strong><?=number_format($p['price'],2,',',' ')?> Kč</strong></p>
+        <form method="post" action="index.php?action=add_to_cart">
+            <?=csrf_field()?>
+            <input type="hidden" name="product_id" value="<?=h($p['id'])?>">
+            Množství: <input name="qty" value="1" size="3">
+            <button class="button">Přidat do košíku</button>
         </form>
-      </div>
-
-      <div class="box">
-        <h3>Firma & kontakt</h3>
-        <p><strong>Název firmy:</strong> Powerbank s.r.o.</p>
-        <p><strong>IČO:</strong> 12345678</p>
-        <p><strong>E-mail:</strong> <a href="mailto:gdeto123456@gmail.com">gdeto123456@gmail.com</a></p>
-        <p><strong>Telefon:</strong> +420 123 456 789</p>
-        <p><strong>Adresa:</strong> Ulice 123, Město, PSČ</p>
-        <p><strong>Poštovné:</strong> Dle tarifu dopravce</p>
-      </div>
-    </section>
-
-  </main>
-
-  <footer>
-    <div style="max-width:var(--maxw);margin:0 auto;padding:0 16px">
-      <p style="margin:0">© <span id="year"></span> Powerbank s.r.o. — Pronájem powerbank</p>
     </div>
-  </footer>
+<?php endforeach; ?>
+</div>
 
-<script>
-  // nastavení roku
-  document.getElementById('year').textContent = new Date().getFullYear();
+<?php elseif($action==='cart'): ?><h2>Košík</h2>
+<?php $cart = $_SESSION['cart'] ?? []; if(empty($cart)) echo '<p>Košík je prázdný.</p>'; else{
+    $ids = array_keys($cart); $placeholders = rtrim(str_repeat('?,', count($ids)), ',');
+    $stmt = $db->prepare('SELECT * FROM products WHERE id IN ('.$placeholders.')'); $stmt->execute($ids); $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $total=0; ?>
+    <table>
+    <?php foreach($rows as $r): $qty=$cart[$r['id']]; $line=$r['price']*$qty; $total += $line; ?>
+        <tr><td><?=h($r['title'])?></td><td>x <?=intval($qty)?></td><td><?=number_format($line,2,',',' ')?> Kč</td><td><a href="index.php?action=remove_cart&id=<?=h($r['id'])?>">odstranit</a></td></tr>
+    <?php endforeach; ?>
+    </table>
+    <p><strong>Celkem: <?=number_format($total,2,',',' ')?> Kč</strong></p>
+    <h3>Dokončit objednávku</h3>
+    <form method="post" action="index.php?action=checkout">
+        <?=csrf_field()?>
+        <div>Email: <input name="email" required value="<?=h(current_user()['email'] ?? '')?>"></div>
+        <div class="small">Platby zatím fiktivně. Integrace platební brány k dispozici v admin nastavení.</div>
+        <button class="button">Odeslat objednávku</button>
+    </form>
+<?php } ?>
 
-  // formulář: otevře mailto odkaz (fallback)
-  function sendMail(e){
-    e.preventDefault();
-    const name = encodeURIComponent(document.getElementById('fname').value.trim());
-    const email = encodeURIComponent(document.getElementById('femail').value.trim());
-    const msg = encodeURIComponent(document.getElementById('fmsg').value.trim());
-    const subject = encodeURIComponent('Poptávka pronájem powerbank - ' + name);
-    const body = `Jméno: ${name}%0D%0AEmail: ${email}%0D%0AZpráva:%0D%0A${msg}`;
-    window.location.href = `mailto:gdeto123456@gmail.com?subject=${subject}&body=${body}`;
-    return false;
-  }
-</script>
+<?php elseif($action==='order_success'): ?><h2>Objednávka přijata</h2>
+<?php $o = $_SESSION['last_order'] ?? null; if(!$o) echo '<p>Žádné poslední objednávky.</p>'; else{ ?>
+    <p>Děkujeme, Vaše objednávka ID <strong><?=h($o['id'])?></strong> byla přijata.</p>
+    <p>Celkem: <strong><?=number_format($o['total'],2,',',' ')?> Kč</strong></p>
+    <p>Potvrzení na email: <strong><?=h($o['email'])?></strong> (v demo se e-maily neodesílají).</p>
+    <?php if(!empty($o['keys'])): ?>
+        <h3>Digitální klíče</h3>
+        <ul><?php foreach($o['keys'] as $k): ?><li><strong><?=h($k['title'])?>:</strong> <code><?=h($k['key'])?></code></li><?php endforeach; ?></ul>
+    <?php endif; ?>
+<?php } ?>
 
+<?php elseif($action==='admin'): ?><h2>Administrace</h2>
+<?php $u = current_user(); if(!$u || !$u['is_admin']): ?>
+    <div class="card">
+        <p>Přihlaste se jako admin nebo použijte defaultního admina (admin@local / admin123). Změňte heslo po prvním přihlášení.</p>
+        <form method="post" action="index.php?action=login"><?=csrf_field()?>
+            <div>Email: <input name="email" required value="admin@local"></div>
+            <div>Heslo: <input type="password" name="password" required></div>
+            <button class="button">Přihlásit</button>
+        </form>
+        <p class="small">Pro registrované uživatele: <a href="index.php?action=register">Registrovat</a> | <a href="index.php?action=login">Přihlásit</a></p>
+    </div>
+<?php else: ?>
+    <div class="card">
+        <p>Jste přihlášen jako admin: <?=h($u['email'])?> — <a href="index.php?action=logout">Odhlásit</a></p>
+        <h3>Přidat hru</h3>
+        <form method="post" action="index.php?action=admin_add" enctype="multipart/form-data">
+            <?=csrf_field()?>
+            <div><input name="title" placeholder="Název" required></div>
+            <div><input name="price" placeholder="Cena v Kč" required></div>
+            <div><input name="stock" placeholder="Sklad (0 = digitální)" value="0"></div>
+            <div><textarea name="description" placeholder="Popis"></textarea></div>
+            <div><textarea name="digital_keys" placeholder="Digitální klíče (každý na nový řádek)"></textarea></div>
+            <div>Obrázek: <input type="file" name="image" accept="image/*"></div>
+            <button class="button">Uložit hru</button>
+        </form>
+    </div>
+    <div class="card">
+        <h3>Seznam produktů</h3>
+        <ul><?php $prods = $db->query('SELECT * FROM products ORDER BY id DESC')->fetchAll(PDO::FETCH_ASSOC); foreach($prods as $p): ?>
+            <li><?=h($p['title'])?> — <?=number_format($p['price'],2,',',' ')?> Kč — skladem: <?=intval($p['stock'])?> — <a href="index.php?action=admin_delete&id=<?=h($p['id'])?>" onclick="return confirm('Opravdu smazat?')">smazat</a></li>
+        <?php endforeach; ?></ul>
+    </div>
+    <div class="card">
+        <h3>Objednávky</h3>
+        <?php $orders = $db->query('SELECT * FROM orders ORDER BY id DESC')->fetchAll(PDO::FETCH_ASSOC); if(!$orders) echo '<p>Žádné objednávky.</p>'; else{ ?>
+            <table>
+                <tr><th>ID</th><th>Email</th><th>Celkem</th><th>Stav</th><th>Akce</th></tr>
+                <?php foreach($orders as $o): ?>
+                    <tr>
+                        <td><?=h($o['id'])?></td>
+                        <td><?=h($o['email'])?></td>
+                        <td><?=number_format($o['total'],2,',',' ')?> Kč</td>
+                        <td><?=h($o['status'])?></td>
+                        <td>
+                            <form method="post" action="index.php?action=admin_update_order" class="inline"><?=csrf_field()?>
+                                <input type="hidden" name="order_id" value="<?=h($o['id'])?>">
+                                <select name="status">
+                                    <option <?= $o['status']==='new'?'selected':''?>>new</option>
+                                    <option <?= $o['status']==='processing'?'selected':''?>>processing</option>
+                                    <option <?= $o['status']==='completed'?'selected':''?>>completed</option>
+                                </select>
+                                <button class="button">Uložit</button>
+                            </form>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </table>
+        <?php } ?>
+    </div>
+<?php endif; ?>
+
+<?php elseif($action==='register'): ?><h2>Registrace</h2>
+<form method="post" action="index.php?action=register"><?=csrf_field()?>
+    <div>Email: <input name="email" required></div>
+    <div>Heslo: <input type="password" name="password" required></div>
+    <button class="button">Registrovat</button>
+</form>
+
+<?php elseif($action==='login'): ?><h2>Přihlášení</h2>
+<form method="post" action="index.php?action=login"><?=csrf_field()?>
+    <div>Email: <input name="email" required></div>
+    <div>Heslo: <input type="password" name="password" required></div>
+    <button class="button">Přihlásit</button>
+</form>
+
+<?php else: ?><p>Neznámá akce.</p>
+
+<?php endif; ?><footer>
+    <hr>
+    <small>Demo e-shop — upravte nastavení (email, hash admina), integrujte platební bránu a nasazení na produkční server (HTTPS).</small>
+</footer>
 </body>
 </html>
